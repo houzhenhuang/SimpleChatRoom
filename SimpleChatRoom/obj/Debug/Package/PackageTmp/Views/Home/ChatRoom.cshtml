@@ -1,0 +1,69 @@
+﻿@{
+    ViewBag.Title = "简单聊天室";
+}
+<div class="container" style="margin-top:20px">
+    <fieldset>
+        <legend>请填写信息</legend>
+        <div class="form-group">
+            <label for="roomName">房间:</label>
+            <select class="form-control" id="roomName" style="display:inline-block">
+                <option value="1号">1号</option>
+                <option value="2号">2号</option>
+                <option value="3号">3号</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="name">姓名:</label>
+            <input type="text" class="form-control" id="name" placeholder="请输入姓名" style="display:inline-block">
+            <input type="button" id="joinRoom" value="加入聊天室" class="btn btn-info" style="display:inline-block" />
+        </div>
+    </fieldset>
+    <div class="form-group">
+        <label for="name">消息:</label>
+        <input type="text" class="form-control" id="message"
+               placeholder="请输入要发送的消息" style="display:inline-block">
+        <input type="button" id="sendMessage" value="Send" class="btn btn-info" style="display:inline-block" />
+    </div>
+    <ul id="messageBox"></ul>
+</div>
+@section scripts
+{
+    <script src="~/Scripts/jquery.signalR-2.3.0.min.js"></script>
+    <script src="~/signalr/hubs"></script>
+    <script>
+        $(function () {
+            var chat = $.connection.serverHub;
+            //console.log(chat);
+            chat.client.addUserIn = function (roomName, userName) {
+                $("#messageBox").append('<li><strong">' + userName + '</strong>进入' + roomName + '聊天室</li>');
+            }
+            chat.client.sendMessage = function (userName, message) {
+                $("#messageBox").append('<li><strong>' + userName + '</strong>:' + message + '</li>');
+            }
+            $('#message').focus();
+            //开始连接服务器
+            $.connection.hub.start().done(function () {
+                //加入聊天室
+                $('#joinRoom').click(function () {
+                    var roomName = $("#roomName").val();
+                    var userName = $("#name").val();
+                    //调用服务器端集线器的AddToRoom方法
+                    chat.server.addToRoom(roomName, userName);
+                    //清空输入框信息并获取焦点
+                    $("#message").val('').focus();
+                });
+                //发送消息
+                $('#sendMessage').click(function () {
+                    var roomName = $("#roomName").val();
+                    var userName = $("#name").val();
+                    var message = $("#message").val();
+                    //调用服务器端集线器的Send方法
+                    chat.server.send(roomName, userName, message);
+                    //清空输入框信息并获取焦点
+                    $("#message").val('').focus();
+                })
+            })
+        });
+    </script>
+}
+
